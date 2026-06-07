@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useGame } from '../state/game-context';
 import { GameState, PlayerId, AIAction } from '../types/game';
 import { evaluateAIActions } from '../game/ai';
+import { getCardEffects, getBanditTarget, generateRandomResources } from '../game/card-effects';
 
 /**
  * Hook that orchestrates the AI turn.
@@ -57,6 +58,36 @@ function executeAIAction(
   switch (action.type) {
     case 'play-card': {
       dispatch({ type: 'PLAY_CARD', player: 'ai', cardId: action.cardId });
+
+      // Dispatch card effects for title/event cards
+      const card = state.players['ai'].hand.find(c => c.id === action.cardId);
+      if (card) {
+        const effects = getCardEffects(card, 'ai');
+        for (const effect of effects) {
+          switch (effect.type) {
+            case 'DRAW_CARDS':
+              dispatch({ type: 'DRAW_CARDS', player: effect.target, count: effect.count });
+              break;
+            case 'GAIN_RESOURCES':
+              dispatch({ type: 'ADD_RESOURCES', player: effect.target, resources: generateRandomResources(effect.count) });
+              break;
+            case 'DISCARD_RANDOM':
+              dispatch({ type: 'DISCARD_CARDS', player: effect.target, count: effect.count });
+              break;
+            case 'REVEAL_OPPONENT_HAND':
+              dispatch({ type: 'REVEAL_HAND', player: effect.player });
+              break;
+            case 'MOVE_BANDIT': {
+              const target = getBanditTarget(state.board, 'ai');
+              if (target) {
+                dispatch({ type: 'MOVE_BANDIT', player: 'ai', target });
+              }
+              break;
+            }
+          }
+        }
+      }
+
       dispatch({ type: 'SET_TURN_PHASE', phase: 'build' });
       break;
     }

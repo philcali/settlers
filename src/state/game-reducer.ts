@@ -12,6 +12,7 @@ import {
   ResourceType,
   AIAction,
 } from '../types/game';
+import { getCardEffects, applyEffects, getBanditTarget } from '../game/card-effects';
 
 // --- Action types ---
 
@@ -35,7 +36,8 @@ export type GameAction =
   | { type: 'EXECUTE_TRADE'; from: PlayerId; to: PlayerId; offer: Partial<Record<ResourceType, number>>; request: Partial<Record<ResourceType, number>> }
   | { type: 'AI_ACT'; action: AIAction }
   | { type: 'RESET_GAME' }
-  | { type: 'SET_MESSAGE'; message: string | null };
+  | { type: 'SET_MESSAGE'; message: string | null }
+  | { type: 'REVEAL_HAND'; player: PlayerId };
 
 // --- Initial state ---
 
@@ -167,14 +169,30 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
       const newDeck = { ...state.deck, discardPile: [...state.deck.discardPile, card] };
 
-      return {
+      // Apply card effects for title/event cards
+      const effects = getCardEffects(card, player);
+      let newState: GameState = {
         ...state,
         players: {
           ...state.players,
           [player]: { ...playerState, hand },
         },
         deck: newDeck,
+        log: [
+          ...state.log,
+          {
+            turn: state.turnCount,
+            player,
+            action: `played ${card.subtype}`,
+          },
+        ],
       };
+
+      if (effects.length > 0) {
+        newState = applyEffects(newState, player, effects);
+      }
+
+      return newState;
     }
 
     case 'DISCARD_CARDS': {
@@ -376,6 +394,15 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case 'AI_ACT': {
       // Handled by game loop logic
       return state;
+    }
+
+    case 'REVEAL_HAND': {
+      const opponentId = action.player === 'human' ? 'ai' : 'human';
+      const handSize = state.players[opponentId].hand.length;
+      return {
+        ...state,
+        message: `${state.players[opponentId].name}'s hand: ${handSize} card${handSize !== 1 ? 's' : ''}`,
+      };
     }
 
     // --- Turn management ---

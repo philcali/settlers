@@ -173,4 +173,5 @@ export type GameAction =
   | { type: 'MOVE_BANDIT'; player: PlayerId; target: HexCoord }
   | { type: 'EXECUTE_TRADE'; from: PlayerId; to: PlayerId; offer: Partial<Record<ResourceType, number>>; request: Partial<Record<ResourceType, number>> }
   | { type: 'AI_ACT'; action: AIAction }
-  | { type: 'RESET_GAME' };
+  | { type: 'RESET_GAME' }
+  | { type: 'REVEAL_HAND'; player: PlayerId };
