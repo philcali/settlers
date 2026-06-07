@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useReducer, useCallback } from 'react';
+import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { GameState, gameReducer, createInitialState, GameAction } from './game-reducer';
+import { checkWinner } from '../game/rules';
 
 const GameContext = createContext<{
   state: GameState;
@@ -8,6 +9,16 @@ const GameContext = createContext<{
 
 export function GameProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(gameReducer, createInitialState());
+
+  // Check for a winner after every state change
+  useEffect(() => {
+    if (state.phase !== 'playing') return;
+    const winner = checkWinner(state);
+    if (winner) {
+      dispatch({ type: 'SET_PHASE', phase: 'ended', winner });
+      dispatch({ type: 'SET_MESSAGE', message: `${winner === 'human' ? 'You' : 'AI'} reached 10 VP!` });
+    }
+  }, [state, state.phase]);
 
   return (
     <GameContext.Provider value={{ state, dispatch }}>

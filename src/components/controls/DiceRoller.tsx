@@ -33,21 +33,23 @@ export default function DiceRoller() {
     }, 800);
   }
 
-  const d1 = dice.individualDice[0];
-  const d2 = dice.individualDice[1];
+  const d1 = dice.individualDice[0] || 1;
+  const d2 = dice.individualDice[1] || 1;
   const total = dice.value !== null ? dice.value : d1 + d2;
 
   return (
     <div style={styles.container}>
       <div style={styles.diceContainer}>
-        <div style={{ ...styles.die, backgroundColor: dice.isAnimating ? '#555' : '#f5e6c8' }}>
-          <span style={styles.dieFace}>{d1}</span>
-          <div style={styles.dots}>{getDiceDots(d1)}</div>
-        </div>
-        <div style={{ ...styles.die, backgroundColor: dice.isAnimating ? '#555' : '#f5e6c8' }}>
-          <span style={styles.dieFace}>{d2}</span>
-          <div style={styles.dots}>{getDiceDots(d2)}</div>
-        </div>
+        <img
+          src={`/assets/dice/d${d1}.png`}
+          alt={String(d1)}
+          style={{ ...styles.die, filter: dice.isAnimating ? 'grayscale(1)' : 'none' }}
+        />
+        <img
+          src={`/assets/dice/d${d2}.png`}
+          alt={String(d2)}
+          style={{ ...styles.die, filter: dice.isAnimating ? 'grayscale(1)' : 'none' }}
+        />
       </div>
       <div style={styles.total}>Total: {total}</div>
       {canRoll && (
@@ -61,24 +63,6 @@ export default function DiceRoller() {
         </button>
       )}
     </div>
-  );
-}
-
-function getDiceDots(value: number): React.ReactNode {
-  const dotPositions: Record<number, [number, number][]> = {
-    1: [[50, 50]],
-    2: [[25, 25], [75, 75]],
-    3: [[25, 25], [50, 50], [75, 75]],
-    4: [[25, 25], [75, 25], [25, 75], [75, 75]],
-    5: [[25, 25], [75, 25], [50, 50], [25, 75], [75, 75]],
-    6: [[25, 25], [75, 25], [25, 50], [75, 50], [25, 75], [75, 75]],
-  };
-  return (
-    <svg width="40" height="40" viewBox="0 0 100 100">
-      {dotPositions[value]?.map(([cx, cy], i) => (
-        <circle key={i} cx={cx} cy={cy} r="10" fill="#333" />
-      ))}
-    </svg>
   );
 }
 
@@ -117,25 +101,13 @@ const styles: Record<string, React.CSSProperties> = {
     gap: '12px',
   },
   die: {
-    width: '60px',
-    height: '60px',
+    width: '80px',
+    height: '80px',
     borderRadius: '10px',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
+    objectFit: 'contain',
     boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
     border: '2px solid #8b6914',
-  },
-  dieFace: {
-    fontSize: '10px',
-    fontWeight: 'bold',
-    color: '#3a2a0a',
-    marginBottom: '2px',
-  },
-  dots: {
-    width: '40px',
-    height: '40px',
+    backgroundColor: '#f5e6c8',
   },
   total: {
     fontSize: '18px',

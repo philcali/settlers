@@ -8,6 +8,7 @@ import DiceRoller from './components/controls/DiceRoller';
 import BuildPanel from './components/controls/BuildPanel';
 import StatusBar from './components/status/StatusBar';
 import Scoreboard from './components/status/Scoreboard';
+import VictoryOverlay from './components/status/VictoryOverlay';
 import { useInitialPlacement } from './hooks/useInitialPlacement';
 import './App.css';
 
@@ -47,6 +48,7 @@ function App() {
 
   return (
     <div className="app">
+      <VictoryOverlay />
       <StatusBar />
 
       <div className="main">

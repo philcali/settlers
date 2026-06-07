@@ -1,5 +1,15 @@
 /* Game-specific styles */
 
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(212, 165, 67, 0.3); }
+  50% { box-shadow: 0 0 40px rgba(212, 165, 67, 0.6); }
+}
+
 .app {
   width: 100vw;
   height: 100vh;

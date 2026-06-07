@@ -49,7 +49,7 @@
 
 ## UI Polish
 - [x] Add alternating castle placement animation (setup phase)
-- [ ] Add victory overlay with celebration
+- [x] Add victory overlay with celebration
 - [ ] Add hover states on hex tiles
 - [ ] Add card play animation
 - [ ] Add dice roll animation

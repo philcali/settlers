@@ -74,8 +74,11 @@ export function createInitialState(): GameState {
 
 export function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
-    case 'SET_PHASE':
-      return { ...state, phase: action.phase };
+    case 'SET_PHASE': {
+      const updates: Partial<GameState> = { phase: action.phase };
+      if (action.winner !== undefined) updates.winner = action.winner;
+      return { ...state, ...updates };
+    }
 
     case 'SET_TURN_PHASE':
       return { ...state, turnPhase: action.phase };

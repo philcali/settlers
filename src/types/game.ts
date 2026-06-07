@@ -153,7 +153,7 @@ export const CARD_DECK_SPECS: CardSpec[] = [
 // --- Game action types (reducer) ---
 
 export type GameAction =
-  | { type: 'SET_PHASE'; phase: GamePhase }
+  | { type: 'SET_PHASE'; phase: GamePhase; winner?: PlayerId }
   | { type: 'SET_TURN_PHASE'; phase: TurnPhase }
   | { type: 'SET_MESSAGE'; message: string | null }
   | { type: 'SET_BOARD'; board: HexTile[] }
