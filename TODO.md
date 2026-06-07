@@ -30,18 +30,8 @@
 | `event-famine.png` | Famine event card |
 | `event-relic-hunt.png` | Relic Hunt event card |
 
-### Dice Images (`public/assets/dice/`)
-| File | Purpose |
-|---|---|
-| `d1.png` | Die face 1 |
-| `d2.png` | Die face 2 |
-| `d3.png` | Die face 3 |
-| `d4.png` | Die face 4 |
-| `d5.png` | Die face 5 |
-| `d6.png` | Die face 6 |
-
 ## Game Logic
-- [ ] Implement event card effects (Royal Decree, Plague, Crusade, etc.)
+- [x] Implement event card effects (Royal Decree, Plague, Crusade, etc.)
 - [ ] Implement one-way trading (AI offers trades, no negotiation back-and-forth)
 - [ ] Tune AI scoring weights for different strategy preferences
 - [ ] Add bandit mechanics (move bandit, steal cards)
