@@ -7,12 +7,11 @@ import {
   HexCoord,
   BuildingType,
   Card,
-  Deck,
   coordKey,
   ResourceType,
-  AIAction,
 } from '../types/game';
 import { getCardEffects, applyEffects, getBanditTarget } from '../game/card-effects';
+import { getBanditResources } from '../game/dice';
 
 // --- Action types ---
 
@@ -35,6 +34,8 @@ export type GameAction =
   | { type: 'MOVE_BANDIT'; player: PlayerId; target: HexCoord }
   | { type: 'EXECUTE_TRADE'; from: PlayerId; to: PlayerId; offer: Partial<Record<ResourceType, number>>; request: Partial<Record<ResourceType, number>> }
   | { type: 'AI_ACT'; action: AIAction }
+  | { type: 'AUTONOMOUS_BANDIT_MOVE' }
+  | { type: 'STEAL_CARDS'; from: PlayerId; count: number }
   | { type: 'RESET_GAME' }
   | { type: 'SET_MESSAGE'; message: string | null }
   | { type: 'REVEAL_HAND'; player: PlayerId };
@@ -63,7 +64,8 @@ export function createInitialState(): GameState {
     },
     board: [],
     dice: { value: null, isRolled: false, isAnimating: false, individualDice: [1, 1] },
-    banditPosition: null,
+    banditPosition: { q: 1, r: 0 },
+    banditMovedThisTurn: false,
     deck: { cards: [], discardPile: [] },
     turnCount: 0,
     winner: null,
@@ -170,7 +172,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const newDeck = { ...state.deck, discardPile: [...state.deck.discardPile, card] };
 
       // Apply card effects for title/event cards
-      const effects = getCardEffects(card, player);
+      const effects = getCardEffects(card, player, state.board);
       let newState: GameState = {
         ...state,
         players: {
@@ -314,7 +316,11 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case 'SET_DICE_VALUE': {
-      return {
+      // Check bandit stealing: steal from opponent of the current player
+      const opponentId: PlayerId = state.currentPlayer === 'human' ? 'ai' : 'human';
+      const stealCount = getBanditResources(state.board, state.banditPosition, opponentId);
+
+      let result: GameState = {
         ...state,
         dice: {
           ...state.dice,
@@ -323,6 +329,33 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           isAnimating: false,
         },
       };
+
+      if (stealCount > 0 && state.banditPosition) {
+        const opp = state.players[opponentId];
+        const hand = [...opp.hand];
+        const stolen = hand.splice(-stealCount, stealCount);
+        result = {
+          ...result,
+          players: {
+            ...result.players,
+            [opponentId]: { ...opp, hand },
+          },
+          deck: {
+            ...result.deck,
+            discardPile: [...result.deck.discardPile, ...stolen],
+          },
+          log: [
+            ...result.log,
+            {
+              turn: result.turnCount,
+              player: state.currentPlayer,
+              action: `the bandit stole ${stealCount} card${stealCount > 1 ? 's' : ''} from ${opp.name}`,
+            },
+          ],
+        };
+      }
+
+      return result;
     }
 
     case 'COLLECT_RESOURCES': {
@@ -336,12 +369,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const { player, target } = action;
       const playerState = { ...state.players[player] };
 
-      // Steal from players with buildings on bandit tile
-      const targetTile = state.board.find(t => t.coord.q === target.q && t.coord.r === target.r);
-      const stolen: Card[] = [];
-
-      const newBoard = state.board.map(t =>
-        coordKey(t.coord) === coordKey(target) ? { ...t, hasBandit: true } : t
+      const newBoard = state.board.map((t) =>
+        coordKey(t.coord) === coordKey(target) ? { ...t, hasBandit: true } : { ...t, hasBandit: false },
       );
 
       return {
@@ -352,6 +381,37 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           ...state.players,
           [player]: playerState,
         },
+      };
+    }
+
+    // --- Steal cards (bandit) ---
+
+    case 'STEAL_CARDS': {
+      const { from, count } = action;
+      if (count <= 0 || state.players[from].hand.length === 0) return state;
+
+      const fromState = { ...state.players[from] };
+      const hand = [...fromState.hand];
+      const stolen = hand.splice(-count, count);
+
+      return {
+        ...state,
+        players: {
+          ...state.players,
+          [from]: { ...fromState, hand },
+        },
+        deck: {
+          ...state.deck,
+          discardPile: [...state.deck.discardPile, ...stolen],
+        },
+        log: [
+          ...state.log,
+          {
+            turn: state.turnCount,
+            player: state.currentPlayer,
+            action: `the bandit stole ${count} card${count > 1 ? 's' : ''} from ${fromState.name}`,
+          },
+        ],
       };
     }
 
@@ -411,14 +471,50 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const nextPhase = getNextPhase(state.turnPhase);
 
       if (nextPhase === 'draw') {
-        // New turn
-        return {
+        // New turn — reset bandit flag and move bandit autonomously
+        const resetState: GameState = {
           ...state,
           turnCount: state.turnCount + 1,
           currentPlayer: state.currentPlayer === 'human' ? 'ai' : 'human',
           turnPhase: 'draw',
+          banditMovedThisTurn: false,
           dice: { value: null, isRolled: false, isAnimating: false, individualDice: [1, 1] },
         };
+
+        // Autonomous bandit movement: hop to a random tile with a building
+        if (resetState.banditPosition) {
+          const movableTiles = resetState.board.filter(
+            (t) => t.province !== 'desert' && t.building !== null,
+          );
+          if (movableTiles.length > 0) {
+            const target = movableTiles[Math.floor(Math.random() * movableTiles.length)];
+            const prevPos = resetState.banditPosition;
+            const newBoard = resetState.board.map((t) => ({
+              ...t,
+              hasBandit:
+                coordKey(t.coord) === coordKey(target.coord) ||
+                coordKey(t.coord) === coordKey(prevPos)
+                  ? coordKey(t.coord) === coordKey(target.coord)
+                  : t.hasBandit,
+            }));
+            return {
+              ...resetState,
+              banditPosition: target.coord,
+              banditMovedThisTurn: true,
+              board: newBoard,
+              log: [
+                ...resetState.log,
+                {
+                  turn: resetState.turnCount,
+                  player: resetState.currentPlayer,
+                  action: 'the bandit moved autonomously',
+                },
+              ],
+            };
+          }
+        }
+
+        return resetState;
       }
 
       return {

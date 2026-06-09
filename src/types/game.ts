@@ -70,6 +70,7 @@ export type GameState = {
   board: HexTile[];
   dice: DiceState;
   banditPosition: HexCoord | null;
+  banditMovedThisTurn: boolean;
   deck: Deck;
   turnCount: number;
   winner: PlayerId | null;

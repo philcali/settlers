@@ -34,7 +34,7 @@
 - [x] Implement event card effects (Royal Decree, Plague, Crusade, etc.)
 - [ ] Implement one-way trading (AI offers trades, no negotiation back-and-forth)
 - [ ] Tune AI scoring weights for different strategy preferences
-- [ ] Add bandit mechanics (move bandit, steal cards)
+- [x] Add bandit mechanics (move bandit, steal cards)
 - [ ] Add "longest trade route" tracking (optional)
 
 ## UI Polish

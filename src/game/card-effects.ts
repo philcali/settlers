@@ -18,7 +18,7 @@ export type CardEffect =
 
 // --- Effect definitions per card subtype ---
 
-export function getCardEffects(card: Card, player: PlayerId): CardEffect[] {
+export function getCardEffects(card: Card, player: PlayerId, board?: GameState['board']): CardEffect[] {
   const opponent: PlayerId = player === 'human' ? 'ai' : 'human';
 
   switch (card.subtype) {
@@ -34,8 +34,13 @@ export function getCardEffects(card: Card, player: PlayerId): CardEffect[] {
     case 'spy-network':
       return [{ type: 'REVEAL_OPPONENT_HAND', player }];
 
-    case 'mercenary-company':
-      return [{ type: 'MOVE_BANDIT', target: { q: 0, r: 0 } }];
+    case 'mercenary-company': {
+      if (!board) return [{ type: 'MOVE_BANDIT', target: { q: 0, r: 0 } }];
+      const opponent: PlayerId = player === 'human' ? 'ai' : 'human';
+      const target = getBanditTarget(board, opponent);
+      if (!target) return [];
+      return [{ type: 'MOVE_BANDIT', target }];
+    }
 
     case 'harvest-festival':
       return [

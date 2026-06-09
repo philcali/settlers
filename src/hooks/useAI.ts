@@ -62,7 +62,7 @@ function executeAIAction(
       // Dispatch card effects for title/event cards
       const card = state.players['ai'].hand.find(c => c.id === action.cardId);
       if (card) {
-        const effects = getCardEffects(card, 'ai');
+        const effects = getCardEffects(card, 'ai', state.board);
         for (const effect of effects) {
           switch (effect.type) {
             case 'DRAW_CARDS':
@@ -78,7 +78,8 @@ function executeAIAction(
               dispatch({ type: 'REVEAL_HAND', player: effect.player });
               break;
             case 'MOVE_BANDIT': {
-              const target = getBanditTarget(state.board, 'ai');
+              const opponentId: PlayerId = 'ai' === 'human' ? 'ai' : 'human';
+              const target = getBanditTarget(state.board, opponentId);
               if (target) {
                 dispatch({ type: 'MOVE_BANDIT', player: 'ai', target });
               }
