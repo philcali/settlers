@@ -18,6 +18,17 @@
   100% { transform: rotate(360deg) scale(1); }
 }
 
+@keyframes cardSlideOut {
+  from {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(200px) scale(0.7);
+    opacity: 0;
+  }
+}
+
 .app {
   width: 100vw;
   height: 100vh;

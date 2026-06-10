@@ -3,6 +3,7 @@ import { PROVINCE_ASSETS } from '../../types/game';
 
 interface Props {
   tile: HexTileType;
+  isHovered?: boolean;
 }
 
 /**
@@ -12,7 +13,7 @@ interface Props {
  * 3. Building marker (SVG overlay)
  * 4. Bandit marker
  */
-export default function HexTile({ tile }: Props) {
+export default function HexTile({ tile, isHovered }: Props) {
   const province = tile.province;
   const artUrl = PROVINCE_ASSETS[province];
 
@@ -22,7 +23,14 @@ export default function HexTile({ tile }: Props) {
   return (
     <div style={styles.container}>
       {/* Province art background */}
-      <div style={{ ...styles.hexShape, clipPath: hexClipPath, WebkitClipPath: hexClipPath }}>
+      <div
+        style={{
+          ...styles.hexShape,
+          clipPath: hexClipPath,
+          WebkitClipPath: hexClipPath,
+          filter: isHovered ? 'brightness(1.15)' : undefined,
+        }}
+      >
         {artUrl ? (
           <img
             src={artUrl}
@@ -108,6 +116,7 @@ const styles: Record<string, React.CSSProperties> = {
     width: '96px',
     height: '96px',
     overflow: 'hidden',
+    transition: 'filter 0.15s ease',
   },
   provinceImage: {
     width: '100%',
