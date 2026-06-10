@@ -108,7 +108,7 @@ function executeAIAction(
     }
     case 'draw-cards': {
       dispatch({ type: 'DRAW_CARDS', player: 'ai', count: action.count });
-      dispatch({ type: 'SET_TURN_PHASE', phase: 'build' });
+      dispatch({ type: 'SET_TURN_PHASE', phase: 'play' });
       break;
     }
     case 'gain-resources': {

@@ -1,4 +1,4 @@
-import { Card as CardType } from '../../types/game';
+import { Card as CardType, CARD_ASSETS } from '../../types/game';
 
 interface Props {
   card: CardType;
@@ -71,34 +71,16 @@ export default function Card({ card, onClick, disabled }: Props) {
         {subtypeLabels[card.subtype] || card.subtype}
       </div>
       <div style={styles.cardBody}>
-        {/* Placeholder for card art — user will replace with generated art */}
-        <div style={{ ...styles.artPlaceholder, backgroundColor: borderColor + '33' }}>
-          <span style={{ fontSize: '24px' }}>{getCardIcon(card)}</span>
-        </div>
+        <img
+          src={CARD_ASSETS[card.subtype] ?? ''}
+          alt={card.subtype}
+          style={styles.cardArt}
+          draggable={false}
+        />
       </div>
     </div>
   );
 }
-
-function getCardIcon(card: { type: string; subtype: string }): string {
-  const icons: Record<string, string> = {
-    wood: '🌲',
-    stone: '⬡',
-    grain: '🌾',
-    ore: '⚒',
-    livestock: '🐄',
-    'royal-decree': '👑',
-    plague: '☠',
-    crusade: '⚔',
-    'spy-network': '🕵',
-    'mercenary-company': '🐴',
-    'harvest-festival': '🎉',
-    famine: '🏜',
-    'relic-hunt': '💎',
-  };
-  return icons[card.subtype] || '🃏';
-}
-
 const styles: Record<string, React.CSSProperties> = {
   card: {
     width: '100px',
@@ -137,12 +119,10 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     justifyContent: 'center',
   },
-  artPlaceholder: {
+  cardArt: {
     width: '70px',
     height: '70px',
     borderRadius: '4px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
+    objectFit: 'cover',
   },
 };

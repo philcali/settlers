@@ -2,43 +2,16 @@ import {
   GameState,
   PlayerId,
   PlayerState,
-  GamePhase,
   TurnPhase,
-  HexCoord,
-  BuildingType,
   Card,
   coordKey,
   ResourceType,
+  GameAction,
+  AIAction,
+  Deck,
 } from '../types/game';
-import { getCardEffects, applyEffects, getBanditTarget } from '../game/card-effects';
+import { getCardEffects, applyEffects } from '../game/card-effects';
 import { getBanditResources } from '../game/dice';
-
-// --- Action types ---
-
-export type GameAction =
-  | { type: 'SET_PHASE'; phase: GamePhase }
-  | { type: 'SET_TURN_PHASE'; phase: TurnPhase }
-  | { type: 'ADVANCE_TURN' }
-  | { type: 'PLACE_CASTLE'; player: PlayerId; tileKey: string }
-  | { type: 'INITIAL_PLACEMENT_DONE' }
-  | { type: 'DRAW_CARDS'; player: PlayerId; count: number }
-  | { type: 'PLAY_CARD'; player: PlayerId; cardId: string }
-  | { type: 'DISCARD_CARDS'; player: PlayerId; count: number }
-  | { type: 'ADD_RESOURCES'; player: PlayerId; resources: Partial<Record<ResourceType, number>> }
-  | { type: 'REMOVE_RESOURCES'; player: PlayerId; resources: Partial<Record<ResourceType, number>> }
-  | { type: 'BUILD'; player: PlayerId; tileKey: string; building: BuildingType }
-  | { type: 'UPGRADE'; player: PlayerId; tileKey: string; to: BuildingType }
-  | { type: 'ROLL_DICE' }
-  | { type: 'SET_DICE_VALUE'; value: number; individualDice: [number, number] }
-  | { type: 'COLLECT_RESOURCES'; player: PlayerId }
-  | { type: 'MOVE_BANDIT'; player: PlayerId; target: HexCoord }
-  | { type: 'EXECUTE_TRADE'; from: PlayerId; to: PlayerId; offer: Partial<Record<ResourceType, number>>; request: Partial<Record<ResourceType, number>> }
-  | { type: 'AI_ACT'; action: AIAction }
-  | { type: 'AUTONOMOUS_BANDIT_MOVE' }
-  | { type: 'STEAL_CARDS'; from: PlayerId; count: number }
-  | { type: 'RESET_GAME' }
-  | { type: 'SET_MESSAGE'; message: string | null }
-  | { type: 'REVEAL_HAND'; player: PlayerId };
 
 // --- Initial state ---
 
@@ -92,6 +65,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
     case 'SET_BOARD':
       return { ...state, board: action.board };
+
+    case 'SET_DECK':
+      return { ...state, deck: action.deck };
 
     case 'RESET_GAME': {
       const fresh = createInitialState();

@@ -127,6 +127,24 @@ export const PROVINCE_ASSETS: Record<ProvinceType, string> = {
   desert: '/assets/tiles/desert.png',
 };
 
+// --- Card art paths ---
+
+export const CARD_ASSETS: Record<string, string> = {
+  wood: '/assets/cards/resource-wood.png',
+  stone: '/assets/cards/resource-stone.png',
+  grain: '/assets/cards/resource-grain.png',
+  ore: '/assets/cards/resource-ore.png',
+  livestock: '/assets/cards/resource-livestock.png',
+  'royal-decree': '/assets/cards/title-royal-decree.png',
+  plague: '/assets/cards/title-plague.png',
+  crusade: '/assets/cards/title-crusade.png',
+  'spy-network': '/assets/cards/title-spy-network.png',
+  'mercenary-company': '/assets/cards/title-mercenary-company.png',
+  'harvest-festival': '/assets/cards/event-harvest-festival.png',
+  famine: '/assets/cards/event-famine.png',
+  'relic-hunt': '/assets/cards/event-relic-hunt.png',
+};
+
 // --- Card deck composition ---
 
 export type CardSpec = {
@@ -158,6 +176,7 @@ export type GameAction =
   | { type: 'SET_TURN_PHASE'; phase: TurnPhase }
   | { type: 'SET_MESSAGE'; message: string | null }
   | { type: 'SET_BOARD'; board: HexTile[] }
+  | { type: 'SET_DECK'; deck: Deck }
   | { type: 'ADVANCE_TURN' }
   | { type: 'PLACE_CASTLE'; player: PlayerId; tileKey: string }
   | { type: 'INITIAL_PLACEMENT_DONE' }
