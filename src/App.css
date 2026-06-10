@@ -10,6 +10,14 @@
   50% { box-shadow: 0 0 40px rgba(212, 165, 67, 0.6); }
 }
 
+@keyframes diceRoll {
+  0%   { transform: rotate(0deg) scale(1); }
+  25%  { transform: rotate(90deg) scale(0.85); }
+  50%  { transform: rotate(180deg) scale(1.05); }
+  75%  { transform: rotate(270deg) scale(0.9); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+
 .app {
   width: 100vw;
   height: 100vh;

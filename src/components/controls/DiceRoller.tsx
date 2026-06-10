@@ -37,21 +37,35 @@ export default function DiceRoller() {
   const d2 = dice.individualDice[1] || 1;
   const total = dice.value !== null ? dice.value : d1 + d2;
 
+  const dieStyle1: React.CSSProperties = dice.isAnimating
+    ? { ...styles.die, animation: 'diceRoll 0.3s ease-in-out infinite' }
+    : styles.die;
+
+  const dieStyle2: React.CSSProperties = dice.isAnimating
+    ? { ...styles.die, animation: 'diceRoll 0.3s ease-in-out infinite 0.15s' }
+    : styles.die;
+
   return (
     <div style={styles.container}>
       <div style={styles.diceContainer}>
         <img
           src={`/assets/dice/d${d1}.png`}
           alt={String(d1)}
-          style={{ ...styles.die, filter: dice.isAnimating ? 'grayscale(1)' : 'none' }}
+          style={dieStyle1}
         />
         <img
           src={`/assets/dice/d${d2}.png`}
           alt={String(d2)}
-          style={{ ...styles.die, filter: dice.isAnimating ? 'grayscale(1)' : 'none' }}
+          style={dieStyle2}
         />
       </div>
-      <div style={styles.total}>Total: {total}</div>
+      <div style={{
+        ...styles.total,
+        transform: dice.isAnimating ? 'scale(0.95)' : 'scale(1)',
+        transition: 'transform 0.2s ease',
+      }}>
+        Total: {total}
+      </div>
       {canRoll && (
         <button style={styles.rollButton} onClick={handleRoll}>
           {dice.isAnimating ? 'Rolling...' : 'Roll Dice'}
