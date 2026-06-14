@@ -1,18 +1,19 @@
 import { useGame } from '../../state/game-context';
-import { BuildingType, BUILDING_COSTS, coordKey } from '../../types/game';
-import { canBuild, canUpgrade } from '../../game/rules';
+import { useTurnController } from '../../hooks/useTurnController';
+import { BuildingType, BUILDING_COSTS, coordKey, HexTile } from '../../types/game';
 
 /**
  * BuildPanel shows available buildings the human player can construct.
  * Lists buildings with costs and a build button for each valid option.
  */
 export default function BuildPanel() {
-  const { state, dispatch } = useGame();
+  const { state } = useGame();
+  const controller = useTurnController();
   const human = state.players.human;
-  const isHumanTurn = state.currentPlayer === 'human' && state.phase === 'playing';
 
-  const currentPhase = state.turnPhase;
-  const canAct = isHumanTurn && (currentPhase === 'build' || currentPhase === 'play');
+  const canAct = controller.isHumanTurn && (
+    controller.turnPhase === 'build' || controller.turnPhase === 'play'
+  );
 
   // Find buildable tiles (adjacent to existing human buildings)
   const buildableTiles = findBuildableTiles(state, 'human');
@@ -21,13 +22,13 @@ export default function BuildPanel() {
   const buildsByTile: Record<string, { tileKey: string; tileProvince: string; builds: { type: BuildingType; canAfford: boolean; vp: number }[] }> = {};
 
   for (const tileKey of buildableTiles) {
-    const tile = state.board.find(t => coordKey(t.coord) === tileKey);
+    const tile = state.board.find((t: HexTile) => coordKey(t.coord) === tileKey);
     const province = tile?.province || 'unknown';
 
     const builds: { type: BuildingType; canAfford: boolean; vp: number }[] = [];
 
     // New farm
-    if (!tile?.building) {
+    if (!tile?.building && controller.canBuildOn(tileKey, 'farm')) {
       const cost = BUILDING_COSTS.farm;
       const canAfford = Object.entries(cost).every(
         ([res, amt]) => (human.resources[res as keyof typeof human.resources] || 0) >= amt,
@@ -39,7 +40,7 @@ export default function BuildPanel() {
     if (tile?.building) {
       const upgrades: Record<string, BuildingType> = { farm: 'manor', manor: 'castle' };
       const upgradeTo = upgrades[tile.building.type];
-      if (upgradeTo) {
+      if (upgradeTo && controller.canUpgradeOn(tileKey, upgradeTo)) {
         const cost = BUILDING_COSTS[upgradeTo];
         const canAfford = Object.entries(cost).every(
           ([res, amt]) => (human.resources[res as keyof typeof human.resources] || 0) >= amt,
@@ -55,25 +56,12 @@ export default function BuildPanel() {
 
   function handleBuild(tileKey: string, building: BuildingType) {
     if (!canAct) return;
-    const tile = state.board.find(t => coordKey(t.coord) === tileKey);
+    controller.build(tileKey, building);
+  }
 
-    if (tile?.building) {
-      // Upgrade
-      dispatch({ type: 'UPGRADE', player: 'human', tileKey, to: building });
-    } else {
-      // New build
-      dispatch({ type: 'BUILD', player: 'human', tileKey, building });
-    }
-
-    // Deduct resources
-    const cost = BUILDING_COSTS[building];
-    const resourceDeduction: Record<string, number> = {};
-    for (const [res, amt] of Object.entries(cost)) {
-      resourceDeduction[res] = amt;
-    }
-    dispatch({ type: 'REMOVE_RESOURCES', player: 'human', resources: resourceDeduction });
-
-    dispatch({ type: 'SET_TURN_PHASE', phase: 'roll' });
+  function handlePass() {
+    if (!controller.isHumanTurn || controller.turnPhase !== 'build') return;
+    controller.pass();
   }
 
   if (Object.keys(buildsByTile).length === 0 && !canAct) {
@@ -119,18 +107,26 @@ export default function BuildPanel() {
           </div>
         </div>
       ))}
+      {controller.isHumanTurn && controller.turnPhase === 'build' && (
+        <button
+          style={styles.passButton}
+          onClick={handlePass}
+        >
+          Pass
+        </button>
+      )}
     </div>
   );
 }
 
-function findBuildableTiles(state: any, player: 'human' | 'ai'): string[] {
+function findBuildableTiles(state: { board: HexTile[] }, player: 'human' | 'ai'): string[] {
   const tiles: string[] = [];
-  const playerTiles = state.board.filter(t => t.building?.owner === player);
+  const playerTiles = state.board.filter((t: HexTile) => t.building?.owner === player);
 
   for (const playerTile of playerTiles) {
     const neighbors = getNeighbors(playerTile.coord);
     for (const n of neighbors) {
-      const neighbor = state.board.find(t => t.coord.q === n.q && t.coord.r === n.r);
+      const neighbor = state.board.find((t: HexTile) => t.coord.q === n.q && t.coord.r === n.r);
       if (neighbor && !neighbor.building) {
         const key = `${n.q},${n.r}`;
         if (!tiles.includes(key)) tiles.push(key);
@@ -206,5 +202,15 @@ const styles: Record<string, React.CSSProperties> = {
   },
   costItem: {
     fontSize: '11px',
+  },
+  passButton: {
+    padding: '8px 24px',
+    backgroundColor: '#555',
+    color: '#fff',
+    border: '1px solid #777',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    marginTop: '8px',
   },
 };

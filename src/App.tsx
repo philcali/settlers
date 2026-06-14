@@ -1,5 +1,6 @@
 import { useEffect, useCallback } from 'react';
 import { useGame } from './state/game-context';
+import { useTurnController } from './hooks/useTurnController';
 import { createDeck } from './game/deck';
 import { getAllTiles, assignProvinces, assignNumberTokens } from './game/board';
 import HexGrid from './components/board/HexGrid';
@@ -14,6 +15,7 @@ import './App.css';
 
 function App() {
   const { state, dispatch } = useGame();
+  const controller = useTurnController();
 
   // Initialize board on mount
   useEffect(() => {
@@ -21,6 +23,31 @@ function App() {
       initBoard();
     }
   }, [state.board.length]);
+
+  // Auto-draw at the start of each human turn
+  useEffect(() => {
+    if (controller.turnPhase === 'draw' && controller.isHumanTurn) {
+      controller.drawCards();
+    }
+  }, [controller.turnPhase, controller.isHumanTurn]);
+
+  // Auto-advance from 'play' to 'build' when human has no cards left
+  useEffect(() => {
+    if (
+      controller.turnPhase === 'play' &&
+      controller.isHumanTurn &&
+      state.players.human.hand.length === 0
+    ) {
+      dispatch({ type: 'SET_TURN_PHASE', phase: 'build' });
+    }
+  }, [controller.turnPhase, controller.isHumanTurn, state.players.human.hand.length, dispatch]);
+
+  // Advance turn when human reaches the 'roll' phase (end of their turn)
+  useEffect(() => {
+    if (controller.turnPhase === 'roll' && controller.isHumanTurn) {
+      controller.advanceTurn();
+    }
+  }, [controller.turnPhase, controller.isHumanTurn]);
 
   // Handle human castle placement during setup
   const onTileClick = useCallback((tileKey: string) => {
@@ -32,26 +59,6 @@ function App() {
   useInitialPlacement(() => {
     dispatch({ type: 'INITIAL_PLACEMENT_DONE' });
   });
-
-  // Draw cards at the start of each human turn
-  useEffect(() => {
-    if (state.phase !== 'playing' || state.turnPhase !== 'draw' || state.currentPlayer !== 'human') return;
-    dispatch({ type: 'DRAW_CARDS', player: 'human', count: 3 });
-    dispatch({ type: 'SET_TURN_PHASE', phase: 'play' });
-  }, [state.phase, state.turnPhase, state.currentPlayer, dispatch]);
-
-  // Auto-advance from 'play' to 'build' when human has no cards left to play
-  useEffect(() => {
-    if (state.phase !== 'playing' || state.turnPhase !== 'play' || state.currentPlayer !== 'human') return;
-    if (state.players.human.hand.length > 0) return; // still has cards to play
-    dispatch({ type: 'SET_TURN_PHASE', phase: 'build' });
-  }, [state.phase, state.turnPhase, state.currentPlayer, state.players.human.hand.length, dispatch]);
-
-  // Advance turn when the human reaches the 'roll' phase (end of their turn)
-  useEffect(() => {
-    if (state.phase !== 'playing' || state.turnPhase !== 'roll' || state.currentPlayer !== 'human') return;
-    dispatch({ type: 'ADVANCE_TURN' });
-  }, [state.phase, state.turnPhase, state.currentPlayer, dispatch]);
 
   function initBoard() {
     const tiles = getAllTiles();

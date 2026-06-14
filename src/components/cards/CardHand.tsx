@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { useGame } from '../../state/game-context';
+import { useTurnController } from '../../hooks/useTurnController';
 import Card from './Card';
 import { useAI } from '../../hooks/useAI';
 import type { Card as CardType } from '../../types/game';
@@ -15,15 +16,16 @@ interface AnimatingCard {
  * Includes a slide-out animation when a card is played.
  */
 export default function CardHand() {
-  const { state, dispatch } = useGame();
-  useAI();
+  const { state } = useGame();
+  const controller = useTurnController();
+  useAI(controller);
 
   const [animatingCard, setAnimatingCard] = useState<AnimatingCard | null>(null);
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const { hand } = state.players.human;
-  const isHumanTurn = state.currentPlayer === 'human' && state.phase === 'playing';
+  const isHumanTurn = controller.isHumanTurn;
 
   function handlePlayCard(cardId: string, element: HTMLDivElement | null) {
     if (!isHumanTurn) return;
@@ -40,17 +42,14 @@ export default function CardHand() {
       });
     }
 
-    // Animate then dispatch — timing matches the transition duration
-    setTimeout(() => {
-      dispatch({ type: 'PLAY_CARD', player: 'human', cardId });
-      dispatch({ type: 'SET_TURN_PHASE', phase: 'build' });
-      setAnimatingCard(null);
-    }, 300);
+    // Dispatch immediately — CSS handles the visual animation
+    controller.playCard(cardId);
+    setAnimatingCard(null);
   }
 
   function handlePass() {
     if (!isHumanTurn) return;
-    dispatch({ type: 'SET_TURN_PHASE', phase: 'build' });
+    controller.pass();
   }
 
   // Keep the animating card in the DOM so the container layout doesn't shift
@@ -78,7 +77,7 @@ export default function CardHand() {
           );
         })}
       </div>
-      {isHumanTurn && state.turnPhase === 'play' && (
+      {isHumanTurn && controller.turnPhase === 'play' && (
         <button style={styles.passButton} onClick={handlePass}>
           Pass
         </button>

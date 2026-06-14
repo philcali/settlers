@@ -1,4 +1,5 @@
 import { useGame } from '../../state/game-context';
+import { useTurnController } from '../../hooks/useTurnController';
 
 /**
  * DiceRoller renders the dice display and roll button.
@@ -6,26 +7,30 @@ import { useGame } from '../../state/game-context';
  */
 export default function DiceRoller() {
   const { state, dispatch } = useGame();
+  const controller = useTurnController();
   const { dice } = state;
-  const isHumanTurn = state.currentPlayer === 'human' && state.phase === 'playing';
+  const isHumanTurn = controller.isHumanTurn;
   const canRoll = isHumanTurn && state.turnPhase === 'roll' && !dice.isRolled;
 
   function handleRoll() {
     if (!canRoll) return;
-    dispatch({ type: 'ROLL_DICE' });
+
+    // Capture dice state at roll time to avoid stale closure in setTimeout
+    const capturedDice = state.dice;
+    controller.rollDice();
 
     // Animate then collect resources
     setTimeout(() => {
       dispatch({
         type: 'SET_DICE_VALUE',
-        value: dice.value || 7,
-        individualDice: dice.individualDice,
+        value: capturedDice.value ?? 7,
+        individualDice: capturedDice.individualDice,
       });
       dispatch({ type: 'COLLECT_RESOURCES', player: 'human' });
 
       // Give resources to human player
-      if (dice.value !== null) {
-        const resources = collectResourcesForPlayer(state, 'human', dice.value);
+      if (capturedDice.value !== null) {
+        const resources = collectResourcesForPlayer(state, 'human', capturedDice.value);
         dispatch({ type: 'ADD_RESOURCES', player: 'human', resources });
       }
 
@@ -82,7 +87,7 @@ export default function DiceRoller() {
 
 // Simplified resource collection for the dice roller
 function collectResourcesForPlayer(
-  state: any,
+  state: { board: { province: string; numberToken: number | null; building?: { type: string; owner: string } }[] },
   player: 'human' | 'ai',
   diceTotal: number,
 ): Record<string, number> {

@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
-import { GameState, gameReducer, createInitialState } from './game-reducer';
-import { GameAction } from '../types/game';
+import { gameReducer, createInitialState } from './game-reducer';
+import { GameState, GameAction } from '../types/game';
 import { checkWinner } from '../game/rules';
+import { useTurnController } from '../hooks/useTurnController';
 
 const GameContext = createContext<{
   state: GameState;
@@ -33,3 +34,5 @@ export function useGame() {
   if (!ctx) throw new Error('useGame must be used within GameProvider');
   return ctx;
 }
+
+export { useTurnController };
