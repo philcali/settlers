@@ -12,13 +12,7 @@ export function canBuild(
   // Must have an adjacent building (or be in setup)
   if (state.phase === 'setup') return true;
 
-  const hasAdjacentBuilding = state.board.some(tile => {
-    if (!tile.building || tile.building.owner !== player) return false;
-    const neighbors = getAdjacentTiles(tile.coord, state.board);
-    return neighbors.some(n => n.q === tile.coord.q && n.r === tile.coord.r);
-  });
-
-  // Actually: must have a building already (for non-setup)
+  // Must have a building already (for non-setup)
   const hasAnyBuilding = state.board.some(tile => tile.building?.owner === player);
   if (!hasAnyBuilding) return false;
 
@@ -60,14 +54,14 @@ export function hasAdjacentBuilding(
   const tile = state.board.find(t => coordKey(t.coord) === tileKey);
   if (!tile) return false;
 
-  const neighbors = getAdjacentTiles(tile.coord, state.board);
+  const neighbors = getAdjacentTiles(tile.coord);
   return neighbors.some(n => {
     const neighbor = state.board.find(t => t.coord.q === n.q && t.coord.r === n.r);
     return neighbor?.building?.owner === player;
   });
 }
 
-function getAdjacentTiles(coord: { q: number; r: number }, board: GameState['board']): { q: number; r: number }[] {
+function getAdjacentTiles(coord: { q: number; r: number }): { q: number; r: number }[] {
   const dirs = [
     { q: 1, r: 0 }, { q: 0, r: 1 }, { q: -1, r: 1 },
     { q: -1, r: 0 }, { q: 0, r: -1 }, { q: 1, r: -1 },
@@ -79,8 +73,7 @@ export function getVictoryPoints(player: PlayerId, board: GameState['board']): n
   let points = 0;
   for (const tile of board) {
     if (tile.building?.owner === player) {
-      const pointsMap: Record<BuildingType, number> = { farm: 0, manor: 1, castle: 2 };
-      points += pointsMap[tile.building.type] || 0;
+      points += BUILDING_POINTS[tile.building.type] || 0;
     }
   }
   return points;

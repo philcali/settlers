@@ -30,7 +30,7 @@ function shuffleDeck(deck: Deck): Deck {
 }
 
 export function drawCard(deck: Deck, count: number): { card: Card; newDeck: Deck } {
-  let current = deck;
+  let current = { ...deck, cards: [...deck.cards] };
   const drawn: Card[] = [];
   for (let i = 0; i < count; i++) {
     if (current.cards.length === 0) {
