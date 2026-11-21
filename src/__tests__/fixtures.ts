@@ -63,6 +63,10 @@ export function withTurnPhase(state: GameState, turnPhase: GameState['turnPhase'
   return { ...state, turnPhase };
 }
 
+export function withCurrentPlayer(state: GameState, player: PlayerId): GameState {
+  return { ...state, currentPlayer: player };
+}
+
 export function emptyBoard(): HexTile[] {
   return [
     createTile(0, 0, 'desert', null),

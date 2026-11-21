@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { createDeck, drawCard } from './deck';
-import { CARD_DECK_SPECS } from '../types/game';
+import { CARD_DECK_SPECS, Deck } from '../types/game';
 
 describe('createDeck', () => {
   it('creates a deck with the correct total card count', () => {
@@ -43,7 +43,7 @@ describe('drawCard', () => {
   it('draws multiple cards', () => {
     const deck = createDeck();
     const initialSize = deck.cards.length;
-    const { card, newDeck } = drawCard(deck, 3);
+    const { newDeck } = drawCard(deck, 3);
     expect(newDeck.cards.length).toBe(initialSize - 3);
   });
 
@@ -83,7 +83,7 @@ describe('drawCard', () => {
   });
 
   it('returns undefined card when deck is truly empty', () => {
-    const emptyDeck: { cards: any[]; discardPile: any[] } = { cards: [], discardPile: [] };
+    const emptyDeck: Deck = { cards: [], discardPile: [] };
     const { card, newDeck } = drawCard(emptyDeck, 1);
     expect(card).toBeUndefined();
     expect(newDeck.cards.length).toBe(0);

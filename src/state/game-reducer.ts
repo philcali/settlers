@@ -7,11 +7,22 @@ import {
   coordKey,
   ResourceType,
   GameAction,
-  AIAction,
-  Deck,
+  BuildingType,
+  BUILDING_COSTS,
 } from '../types/game';
 import { getCardEffects, applyEffects } from '../game/card-effects';
 import { getBanditResources } from '../game/dice';
+
+// --- Resource cost helpers ---
+
+function subtractCosts(resources: Record<ResourceType, number>, building: BuildingType): Record<ResourceType, number> {
+  const costs = BUILDING_COSTS[building];
+  const result = { ...resources };
+  for (const [res, amount] of Object.entries(costs)) {
+    result[res as ResourceType] = (result[res as ResourceType] || 0) - (amount || 0);
+  }
+  return result;
+}
 
 // --- Initial state ---
 
@@ -31,6 +42,7 @@ export function createInitialState(): GameState {
     phase: 'setup',
     turnPhase: 'draw',
     currentPlayer: 'human',
+    setupRound: 0, // 0=human1, 1=ai1, 2=human2, 3=ai2, -1=complete
     players: {
       human: createPlayer('human', 'You'),
       ai: createPlayer('ai', 'AI Opponent'),
@@ -58,6 +70,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case 'SET_TURN_PHASE':
+      console.log(`[SET_TURN_PHASE] ${state.turnPhase} → ${action.phase} (currentPlayer=${state.currentPlayer})`);
       return { ...state, turnPhase: action.phase };
 
     case 'SET_MESSAGE':
@@ -71,7 +84,12 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
     case 'RESET_GAME': {
       const fresh = createInitialState();
-      return { ...fresh, board: state.board, deck: state.deck };
+      return {
+        ...fresh,
+        board: state.board,
+        deck: state.deck,
+        banditPosition: fresh.banditPosition,
+      };
     }
 
     // --- Setup: castle placement ---
@@ -79,14 +97,22 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case 'PLACE_CASTLE': {
       const { player, tileKey } = action;
       const tile = state.board.find(t => coordKey(t.coord) === tileKey);
-      if (!tile) return state;
+      if (!tile) {
+        console.log(`[PLACE_CASTLE] tile ${tileKey} not found on board, ignoring`);
+        return state;
+      }
 
       const playerState = { ...state.players[player] };
       const newBuildings = new Map(playerState.buildings);
       newBuildings.set(tileKey, 'farm'); // Initial placement is a farm
 
+      const newRound = state.setupRound + 1;
+      const newCurrentPlayer = player === 'human' ? 'ai' : 'human';
+      console.log(`[PLACE_CASTLE] ${player} placed farm at ${tileKey} (province=${tile.province}) → setupRound=${newRound}, next=${newCurrentPlayer}`);
+
       return {
         ...state,
+        setupRound: newRound,
         players: {
           ...state.players,
           [player]: { ...playerState, buildings: newBuildings },
@@ -94,17 +120,50 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         board: state.board.map(t =>
           coordKey(t.coord) === tileKey ? { ...t, building: { type: 'farm', owner: player } } : t
         ),
-        currentPlayer: player === 'human' ? 'ai' : 'human',
+        currentPlayer: newCurrentPlayer,
       };
     }
 
-    case 'INITIAL_PLACEMENT_DONE':
+    case 'INITIAL_PLACEMENT_DONE': {
+      // Seed a small, symmetric starting bonus so the first playing turn isn't a
+      // dead end: with zero resources and only the two setup farms, a player who
+      // rolls a non-matching number collects nothing and can't build — the exact
+      // "I can't collect" stall. A farm's worth of resources (plus a little buffer)
+      // lets both players put down one more building early, which is what turns
+      // rolls into actual income.
+      const starter: Record<ResourceType, number> = {
+        wood: 2,
+        stone: 1,
+        grain: 1,
+        ore: 0,
+        livestock: 0,
+      };
+      const addStarter = (id: PlayerId) => {
+        const cur = state.players[id].resources;
+        return {
+          ...state.players[id],
+          resources: {
+            wood: cur.wood + starter.wood,
+            stone: cur.stone + starter.stone,
+            grain: cur.grain + starter.grain,
+            ore: cur.ore + starter.ore,
+            livestock: cur.livestock + starter.livestock,
+          },
+        };
+      };
       return {
         ...state,
+        setupRound: -1,
         phase: 'playing',
         turnPhase: 'draw',
         currentPlayer: 'human',
+        players: {
+          ...state.players,
+          human: addStarter('human'),
+          ai: addStarter('ai'),
+        },
       };
+    }
 
     // --- Card drawing ---
 
@@ -141,11 +200,18 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case 'PLAY_CARD': {
       const { player, cardId } = action;
       const playerState = { ...state.players[player] };
-      const hand = playerState.hand.filter(c => c.id !== cardId);
       const card = playerState.hand.find(c => c.id === cardId);
       if (!card) return state;
 
+      const hand = playerState.hand.filter(c => c.id !== cardId);
       const newDeck = { ...state.deck, discardPile: [...state.deck.discardPile, card] };
+
+      // Resource cards: playing one grants 1 of that resource
+      let newResources = playerState.resources;
+      if (card.type === 'resource') {
+        const res = card.subtype as ResourceType;
+        newResources = { ...newResources, [res]: (newResources[res] || 0) + 1 };
+      }
 
       // Apply card effects for title/event cards
       const effects = getCardEffects(card, player, state.board);
@@ -153,7 +219,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         ...state,
         players: {
           ...state.players,
-          [player]: { ...playerState, hand },
+          [player]: { ...playerState, hand, resources: newResources },
         },
         deck: newDeck,
         log: [
@@ -241,6 +307,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const playerState = { ...state.players[player] };
       const newBuildings = new Map(playerState.buildings);
       newBuildings.set(tileKey, building);
+      const newResources = subtractCosts(playerState.resources, building);
 
       const newDeck = { ...state.deck };
 
@@ -248,7 +315,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         ...state,
         players: {
           ...state.players,
-          [player]: { ...playerState, buildings: newBuildings },
+          [player]: { ...playerState, buildings: newBuildings, resources: newResources },
         },
         board: state.board.map(t =>
           coordKey(t.coord) === tileKey ? { ...t, building: { type: building, owner: player } } : t
@@ -262,12 +329,13 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const playerState = { ...state.players[player] };
       const newBuildings = new Map(playerState.buildings);
       newBuildings.set(tileKey, to);
+      const newResources = subtractCosts(playerState.resources, to);
 
       return {
         ...state,
         players: {
           ...state.players,
-          [player]: { ...playerState, buildings: newBuildings },
+          [player]: { ...playerState, buildings: newBuildings, resources: newResources },
         },
         board: state.board.map(t =>
           coordKey(t.coord) === tileKey ? { ...t, building: { type: to, owner: player } } : t
@@ -445,6 +513,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
     case 'ADVANCE_TURN': {
       const nextPhase = getNextPhase(state.turnPhase);
+      console.log(`[ADVANCE_TURN] turnPhase=${state.turnPhase} → ${nextPhase} (turnCount=${state.turnCount}, currentPlayer=${state.currentPlayer})`);
 
       if (nextPhase === 'draw') {
         // New turn — reset bandit flag and move bandit autonomously

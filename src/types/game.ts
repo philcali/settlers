@@ -66,6 +66,7 @@ export type GameState = {
   phase: GamePhase;
   turnPhase: TurnPhase;
   currentPlayer: PlayerId;
+  setupRound: number; // 0-3 during initial placement, -1 when setup is complete
   players: Record<PlayerId, PlayerState>;
   board: HexTile[];
   dice: DiceState;
@@ -190,6 +191,7 @@ export type GameAction =
   | { type: 'ROLL_DICE' }
   | { type: 'SET_DICE_VALUE'; value: number; individualDice: [number, number] }
   | { type: 'COLLECT_RESOURCES'; player: PlayerId }
+  | { type: 'STEAL_CARDS'; from: PlayerId; count: number }
   | { type: 'MOVE_BANDIT'; player: PlayerId; target: HexCoord }
   | { type: 'EXECUTE_TRADE'; from: PlayerId; to: PlayerId; offer: Partial<Record<ResourceType, number>>; request: Partial<Record<ResourceType, number>> }
   | { type: 'AI_ACT'; action: AIAction }

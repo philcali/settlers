@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { canBuild, canUpgrade, hasAdjacentBuilding, getVictoryPoints, checkWinner } from './rules';
-import { createTile, withBoard, withPlayerBuildings, withResources, withPhase, withTurnPhase, fullPlayingState } from '../__tests__/fixtures';
+import { withResources, withPhase, fullPlayingState } from '../__tests__/fixtures';
 import { BuildingType, GameState, PlayerId } from '../types/game';
 
 // Helper to create a simple board with one player's buildings
@@ -84,9 +84,6 @@ describe('canUpgrade', () => {
     const state = makeBoardWithBuildings('human', [
       { q: 1, r: 0, type: 'farm' },
     ]);
-    const stateWithResources = withResources(state, 'human', {
-      wood: 2, grain: 1, stone: 3, ore: 2, grain: 2,
-    });
     // castle costs 4 stone + 4 ore + 3 livestock + 3 grain
     const stateWithCastleResources = withResources(state, 'human', {
       stone: 4, ore: 4, livestock: 3, grain: 3,

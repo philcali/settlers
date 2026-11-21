@@ -113,7 +113,7 @@ describe('assignProvinces', () => {
   });
 
   it('assigns no number tokens (those come later)', () => {
-    const tiles = getAllTiles().map((t) => ({ coord: t } as { coord: { q: number; r: number } }));
+    const tiles = getAllTiles();
     const result = assignProvinces(tiles);
     expect(result.every((t) => t.numberToken === null)).toBe(true);
   });
@@ -130,7 +130,6 @@ describe('assignNumberTokens', () => {
         building: null,
       }));
     const result = assignNumberTokens(tiles);
-    const desert = result.find((t) => t.province === 'desert');
     const nonDesert = result.filter((t) => t.province !== 'desert');
     // assignNumberTokens returns only non-desert tiles
     expect(nonDesert.every((t) => t.numberToken !== null)).toBe(true);

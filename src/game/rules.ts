@@ -7,18 +7,26 @@ export function canBuild(
 ): boolean {
   const playerState = state.players[player];
   const costs = BUILDING_COSTS[building];
-  if (!costs) return false;
+  if (!costs) {
+    console.log(`[canBuild] no costs for ${building}`);
+    return false;
+  }
 
   // Must have an adjacent building (or be in setup)
   if (state.phase === 'setup') return true;
 
   // Must have a building already (for non-setup)
   const hasAnyBuilding = state.board.some(tile => tile.building?.owner === player);
-  if (!hasAnyBuilding) return false;
+  if (!hasAnyBuilding) {
+    console.log(`[canBuild] ${player} has no buildings for ${building}`);
+    return false;
+  }
 
   // Check resources
   for (const [resource, cost] of Object.entries(costs)) {
-    if ((playerState.resources[resource as keyof typeof playerState.resources] || 0) < cost) {
+    const have = playerState.resources[resource as keyof typeof playerState.resources] || 0;
+    if (have < (cost || 0)) {
+      console.log(`[canBuild] ${player} lacks ${resource} for ${building}: need ${cost}, have ${have}`);
       return false;
     }
   }

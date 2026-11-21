@@ -1,4 +1,4 @@
-import { HexCoord, HexTile, ProvinceType, coordKey } from '../types/game';
+import { HexCoord, HexTile, ProvinceType } from '../types/game';
 
 // --- 19-tile flower pattern (flat-top axial coords) ---
 // Constraint: max(|q|, |r|, |q+r|) <= 2
