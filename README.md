@@ -1,73 +1,51 @@
-# React + TypeScript + Vite
+# Settlers of the Realm 🏰
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A two-player hex board game in the spirit of Catan. Place your farms, roll
+the dice, play cards, and outbuild your opponent — first to **10 victory
+points** takes the realm. The AI opponent builds, blocks your best tiles
+with the bandit, and plays cards with intent.
 
-Currently, two official plugins are available:
+Play it: **https://philcali.github.io/settlers/** (or run locally — see below)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Features
 
-## React Compiler
+- 19-tile hex board with number tokens, provinces, and the desert
+- Build chain: **farm → manor → castle** (×1 / ×2 / ×3 production on matching rolls)
+- 92-card deck — resource gains, crusades, plagues, spy networks,
+  mercenary companies (and the bandit they move), harvests, famines, relic hunts
+- Roll a **7**: steal one of the opponent's resources, then *you* place the
+  bandit on one of their tiles (Catan-style)
+- AI opponent: token-aware building/upgrading, targeted robber, card play
+- Victory overlay + play-again
+- Installable **PWA** with offline support (add to home screen on your phone)
+- 70 tests, strict TypeScript, deterministic seeded reducer (no state libs)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Local development
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```sh
+npm install
+npm run dev        # http://localhost:5199/settlers/ (also on LAN)
+npm test           # vitest
+npm run typecheck  # tsc --noEmit
+npm run build      # production bundle in dist/
+npm run preview    # serve the production build
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Architecture
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- **`src/rules.ts`** — pure game rules (board math, production, robber, VP). No React.
+- **`src/game.ts`** — the reducer: every action is pure; randomness is
+  injected via a `seed` field and `mulberry32`, so games are reproducible
+  and testable.
+- **`src/ai.ts`** — decision function over state (returns the next action).
+- **`src/cards.ts`** — card effects, also pure.
+- **`src/components/`** — thin React views (HexBoard, HUD, Hand, BuildBar, Dice, VictoryOverlay).
+- **`src/styles.css`** — hand-rolled CSS, responsive down to phone widths.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## Deployment
+
+GitHub Pages (sub-path aware): `base: '/settlers/'` in `vite.config.ts` must
+match the repo name, and all public assets are referenced through
+`import.meta.env.BASE_URL`. The Actions workflow (`.github/workflows/deploy.yml`)
+builds and deploys `dist/` on every push to `main`. Repo Pages source must be
+set to **GitHub Actions**.
