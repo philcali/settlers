@@ -11,7 +11,11 @@ const TILE_ART: Record<string, string> = {
   desert: '/assets/tiles/desert.png',
 };
 
-const BUILDING_LETTER: Record<string, string> = { farm: 'F', manor: 'M', castle: 'C' };
+const BUILDING_SPRITE: Record<string, Record<string, string>> = {
+  farm: { human: '/assets/buildings/farm-human.png', ai: '/assets/buildings/farm-ai.png' },
+  manor: { human: '/assets/buildings/manor-human.png', ai: '/assets/buildings/manor-ai.png' },
+  castle: { human: '/assets/buildings/castle-human.png', ai: '/assets/buildings/castle-ai.png' },
+};
 
 interface HexBoardProps {
   tiles: Tile[];
@@ -70,10 +74,14 @@ export function HexBoard({ tiles, selectable = false, highlight, targets, onTile
             )}
             {tile.building && (
               <g className={`building building--${tile.building.owner}`} transform="translate(0 16)">
-                <circle r={13} />
-                <text dominantBaseline="central" textAnchor="middle">
-                  {BUILDING_LETTER[tile.building.type]}
-                </text>
+                <image
+                  href={BUILDING_SPRITE[tile.building.type][tile.building.owner]}
+                  x={-24}
+                  y={-24}
+                  width={48}
+                  height={48}
+                  preserveAspectRatio="xMidYMid meet"
+                />
               </g>
             )}
           </g>
