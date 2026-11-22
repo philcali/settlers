@@ -64,7 +64,7 @@ export function Hand({ state, onPlayCard }: { state: GameState; onPlayCard: (car
             <>
               {ai.hand.length === 0 && <span className="hand__empty">No cards yet.</span>}
               {ai.hand.map((c) => (
-                <img key={c.id} className="hand__back" src="/assets/cards/back.png" alt="face-down card" />
+                <img key={c.id} className="hand__back" src={`${import.meta.env.BASE_URL}assets/cards/back.png`} alt="face-down card" />
               ))}
             </>
           )}

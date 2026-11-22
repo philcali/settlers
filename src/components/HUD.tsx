@@ -22,7 +22,7 @@ function PlayerPanel({ state, player }: { state: GameState; player: PlayerState 
       </div>
       <div className="hud__stats">
         <span className="hud__stat" title="cards in hand">
-          <img src="/assets/cards/back.png" alt="hand" />
+          <img src={`${import.meta.env.BASE_URL}assets/cards/back.png`} alt="hand" />
           <b>{player.hand.length}</b>
         </span>
         <span className="hud__stat hud__vp" title="victory points (need 10)">

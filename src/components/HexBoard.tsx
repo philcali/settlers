@@ -3,18 +3,18 @@ import type { Tile } from '../types';
 import { coordKey } from '../types';
 
 const TILE_ART: Record<string, string> = {
-  forest: '/assets/tiles/forest.png',
-  quarry: '/assets/tiles/quarry.png',
-  farmland: '/assets/tiles/farmland.png',
-  mine: '/assets/tiles/mine.png',
-  pasture: '/assets/tiles/pasture.png',
-  desert: '/assets/tiles/desert.png',
+  forest: `${import.meta.env.BASE_URL}assets/tiles/forest.png`,
+  quarry: `${import.meta.env.BASE_URL}assets/tiles/quarry.png`,
+  farmland: `${import.meta.env.BASE_URL}assets/tiles/farmland.png`,
+  mine: `${import.meta.env.BASE_URL}assets/tiles/mine.png`,
+  pasture: `${import.meta.env.BASE_URL}assets/tiles/pasture.png`,
+  desert: `${import.meta.env.BASE_URL}assets/tiles/desert.png`,
 };
 
 const BUILDING_SPRITE: Record<string, Record<string, string>> = {
-  farm: { human: '/assets/buildings/farm-human.png', ai: '/assets/buildings/farm-ai.png' },
-  manor: { human: '/assets/buildings/manor-human.png', ai: '/assets/buildings/manor-ai.png' },
-  castle: { human: '/assets/buildings/castle-human.png', ai: '/assets/buildings/castle-ai.png' },
+  farm: { human: `${import.meta.env.BASE_URL}assets/buildings/farm-human.png`, ai: `${import.meta.env.BASE_URL}assets/buildings/farm-ai.png` },
+  manor: { human: `${import.meta.env.BASE_URL}assets/buildings/manor-human.png`, ai: `${import.meta.env.BASE_URL}assets/buildings/manor-ai.png` },
+  castle: { human: `${import.meta.env.BASE_URL}assets/buildings/castle-human.png`, ai: `${import.meta.env.BASE_URL}assets/buildings/castle-ai.png` },
 };
 
 interface HexBoardProps {

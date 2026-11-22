@@ -167,21 +167,21 @@ export const CARD_SPECS: CardSpec[] = [
 ];
 
 export const RESOURCE_ART: Record<Resource, string> = {
-  wood: '/assets/cards/resource-wood.png',
-  stone: '/assets/cards/resource-stone.png',
-  grain: '/assets/cards/resource-grain.png',
-  ore: '/assets/cards/resource-ore.png',
-  livestock: '/assets/cards/resource-livestock.png',
+  wood: `${import.meta.env.BASE_URL}assets/cards/resource-wood.png`,
+  stone: `${import.meta.env.BASE_URL}assets/cards/resource-stone.png`,
+  grain: `${import.meta.env.BASE_URL}assets/cards/resource-grain.png`,
+  ore: `${import.meta.env.BASE_URL}assets/cards/resource-ore.png`,
+  livestock: `${import.meta.env.BASE_URL}assets/cards/resource-livestock.png`,
 };
 
 export const CARD_ART: Record<string, string> = {
   ...RESOURCE_ART,
-  'royal-decree': '/assets/cards/title-royal-decree.png',
-  plague: '/assets/cards/title-plague.png',
-  crusade: '/assets/cards/title-crusade.png',
-  'spy-network': '/assets/cards/title-spy-network.png',
-  'mercenary-company': '/assets/cards/title-mercenary-company.png',
-  'harvest-festival': '/assets/cards/event-harvest-festival.png',
-  famine: '/assets/cards/event-famine.png',
-  'relic-hunt': '/assets/cards/event-relic-hunt.png',
+  'royal-decree': `${import.meta.env.BASE_URL}assets/cards/title-royal-decree.png`,
+  plague: `${import.meta.env.BASE_URL}assets/cards/title-plague.png`,
+  crusade: `${import.meta.env.BASE_URL}assets/cards/title-crusade.png`,
+  'spy-network': `${import.meta.env.BASE_URL}assets/cards/title-spy-network.png`,
+  'mercenary-company': `${import.meta.env.BASE_URL}assets/cards/title-mercenary-company.png`,
+  'harvest-festival': `${import.meta.env.BASE_URL}assets/cards/event-harvest-festival.png`,
+  famine: `${import.meta.env.BASE_URL}assets/cards/event-famine.png`,
+  'relic-hunt': `${import.meta.env.BASE_URL}assets/cards/event-relic-hunt.png`,
 };
